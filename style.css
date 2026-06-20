@@ -1,0 +1,28 @@
+#chessboard {
+  width: 320px;
+  height: 320px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.square {
+  height: 40px;
+  width: 40px;
+}
+
+.square svg {
+  height: 30px;
+  width: 30px;
+}
+
+.beige {
+  background-color: rgb(110, 110, 99);
+}
+
+.brown {
+  background-color: brown;
+}
+
+.black {
+  fill: black;
+}
