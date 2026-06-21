@@ -6,10 +6,23 @@
     <title>JS CHESS</title>
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <div id="chessboard"></div>
-    <p>It is <span id="player"></span>'s turn</p>
-    <p id="info-display"></p>
+    <main class="game">
+      <header class="game-header">
+        <h1>JS Chess</h1>
+
+        <div class="status-card">
+          <p>Turn: <span id="player">white</span></p>
+          <p id="info-display"></p>
+        </div>
+
+        <button id="restart-btn" type="button">Restart Game</button>
+      </header>
+
+      <div id="chessboard" aria-label="Chess board"></div>
+    </main>
+
     <script src="pieces.js"></script>
     <script src="script.js"></script>
   </body>
