@@ -3,24 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JS CHESS</title>
+    <title>JS Chess</title>
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
     <main class="game">
-      <header class="game-header">
+      <header class="top">
         <h1>JS Chess</h1>
 
-        <div class="status-card">
+        <div class="status">
           <p>Turn: <span id="player">white</span></p>
           <p id="info-display"></p>
         </div>
 
-        <button id="restart-btn" type="button">Restart Game</button>
+        <button id="restart-btn" type="button">Restart</button>
       </header>
 
-      <div id="chessboard" aria-label="Chess board"></div>
+      <div id="chessboard"></div>
     </main>
 
     <script src="pieces.js"></script>
