@@ -250,7 +250,8 @@ h1 {
 }
 
 .square.selected {
-  box-shadow: inset 0 0 0 4px rgba(243, 220, 100, 0.95);
+  outline: 4px solid rgba(243, 220, 100, 0.95);
+  outline-offset: -4px;
 }
 
 .square.legal::after {
@@ -383,6 +384,39 @@ h1 {
   letter-spacing: -0.02em;
 }
 
+.bot-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--green-deep);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.bot-loader.hidden {
+  display: none;
+}
+
+.loader-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--green-main);
+  animation: botPulse 0.75s ease-in-out infinite alternate;
+}
+
+@keyframes botPulse {
+  from {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .panel-section {
   min-height: 0;
   display: grid;
@@ -450,6 +484,7 @@ h1 {
 .moves-section {
   align-self: start;
   align-content: start;
+  justify-content: stretch;
 }
 
 .history-list {
@@ -547,24 +582,64 @@ h1 {
 }
 
 .winner-icon {
-  width: 78px;
-  height: 78px;
-  display: grid;
-  place-items: center;
+  width: 132px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
   border-radius: 24px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
+}
+
+.green-flag {
+  position: relative;
+  width: 38px;
+  height: 54px;
+  display: block;
+}
+
+.green-flag::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 4px;
+  height: 46px;
+  border-radius: 999px;
+  background: #4f6f37;
+}
+
+.green-flag::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  width: 28px;
+  height: 20px;
+  border-radius: 4px 8px 8px 4px;
+  background: var(--green-main);
+}
+
+.loser-king {
+  color: var(--danger);
   font-size: 4rem;
   line-height: 1;
 }
 
-.winner-icon.white {
-  color: #fff8ea;
-  -webkit-text-stroke: 1.2px #342f28;
+.draw-symbol {
+  color: var(--text);
+  font-size: 4rem;
+  font-weight: 950;
+  line-height: 1;
 }
 
-.winner-icon.black {
-  color: #1f261b;
+.winner-help {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .winner-card h2 {
