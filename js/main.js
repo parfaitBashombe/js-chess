@@ -32,6 +32,7 @@ const winnerText = document.getElementById("winnerText");
 const playAgainBtn = document.getElementById("playAgainBtn");
 const humanModeBtn = document.getElementById("humanModeBtn");
 const botModeBtn = document.getElementById("botModeBtn");
+const botLoader = document.getElementById("botLoader");
 
 let board;
 let currentTurn;
@@ -45,8 +46,11 @@ let statusMessage;
 let gameOver;
 let gameMode = "human";
 let botThinking = false;
+let botJobId = 0;
 
 const startNewGame = () => {
+  botJobId += 1;
+
   board = createInitialBoard();
   currentTurn = "white";
   selected = null;
@@ -234,7 +238,11 @@ const renderPanel = () => {
   statusText.textContent = statusMessage;
   turnBadge.textContent = gameOver
     ? "Game over"
-    : `${capitalize(currentTurn)} to move`;
+    : botThinking
+      ? "Bot thinking"
+      : `${capitalize(currentTurn)} to move`;
+
+  botLoader.classList.toggle("hidden", !botThinking);
 
   blackSub.textContent = gameMode === "bot" ? "Bot" : "Player 2";
 
@@ -250,7 +258,7 @@ const renderPanel = () => {
   blackPlayer.querySelector(".player-status").textContent =
     currentTurn === "black" && !gameOver
       ? gameMode === "bot"
-        ? "Bot"
+        ? "Calculating"
         : "Thinking"
       : "Waiting";
 
@@ -464,8 +472,21 @@ const updateGameStatus = (lastMover) => {
 };
 
 const showEndScreen = (winner, title, text) => {
-  winnerIcon.className = `winner-icon ${winner || "white"}`;
-  winnerIcon.textContent = winner ? icons[winner].king : "½";
+  if (!winner) {
+    winnerIcon.innerHTML = `<span class="draw-symbol">½</span>`;
+    winnerTitle.textContent = title;
+    winnerText.textContent = text;
+    endScreen.classList.remove("hidden");
+    return;
+  }
+
+  const loser = opposite(winner);
+
+  winnerIcon.innerHTML = `
+    <span class="green-flag" aria-label="Winner flag"></span>
+    <span class="loser-king">${icons[loser].king}</span>
+  `;
+
   winnerTitle.textContent = title;
   winnerText.textContent = text;
   endScreen.classList.remove("hidden");
@@ -480,15 +501,31 @@ const runBotIfNeeded = () => {
   statusMessage = "Bot is thinking.";
   render();
 
+  const currentJobId = ++botJobId;
+
   window.setTimeout(() => {
-    const botMove = getBotMove(cloneBoard(board), "black", enPassantTarget);
+    if (currentJobId !== botJobId) return;
+    if (gameOver || gameMode !== "bot" || currentTurn !== "black") return;
 
-    botThinking = false;
+    const startedAt = performance.now();
+    const result = getBotMove(cloneBoard(board), "black", enPassantTarget);
+    const calculationTime = performance.now() - startedAt;
+    const remainingWait = Math.max(80, 320 - calculationTime);
 
-    if (!botMove) return;
+    window.setTimeout(() => {
+      if (currentJobId !== botJobId) return;
+      if (gameOver || gameMode !== "bot" || currentTurn !== "black") return;
 
-    makeMove(botMove.from.row, botMove.from.col, botMove.to);
-  }, 350);
+      botThinking = false;
+
+      if (!result || !result.move) {
+        render();
+        return;
+      }
+
+      makeMove(result.move.from.row, result.move.from.col, result.move.to);
+    }, remainingWait);
+  }, 80);
 };
 
 const setGameMode = (mode) => {
@@ -500,5 +537,11 @@ humanModeBtn.addEventListener("click", () => setGameMode("human"));
 botModeBtn.addEventListener("click", () => setGameMode("bot"));
 resetBtn.addEventListener("click", startNewGame);
 playAgainBtn.addEventListener("click", startNewGame);
+
+endScreen.addEventListener("click", (event) => {
+  if (event.target === endScreen) {
+    endScreen.classList.add("hidden");
+  }
+});
 
 startNewGame();

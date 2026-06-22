@@ -53,6 +53,11 @@
         <div class="status-card">
           <p class="status-label">Game status</p>
           <p class="status-text" id="statusText">White to move.</p>
+
+          <div class="bot-loader hidden" id="botLoader">
+            <span class="loader-dot"></span>
+            <span>Bot is calculating</span>
+          </div>
         </div>
 
         <section class="panel-section captured-section">
@@ -103,9 +108,12 @@
 
     <div class="end-screen hidden" id="endScreen">
       <div class="winner-card">
-        <div class="winner-icon" id="winnerIcon">♔</div>
+        <div class="winner-icon" id="winnerIcon"></div>
         <h2 id="winnerTitle">White wins</h2>
         <p id="winnerText">Checkmate.</p>
+        <p class="winner-help">
+          Click outside this banner to review the board and moves.
+        </p>
         <button class="control-btn" id="playAgainBtn" type="button">
           Play again
         </button>
