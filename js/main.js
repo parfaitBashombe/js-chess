@@ -192,9 +192,15 @@ const renderBoard = () => {
           !(gameMode === "bot" && currentTurn === "black");
 
         pieceEl.className = `piece ${piece.color}`;
-        pieceEl.textContent = icons[piece.color][piece.type];
         pieceEl.draggable = canHumanMove;
         pieceEl.setAttribute("aria-label", `${piece.color} ${piece.type}`);
+
+        const img = document.createElement("img");
+        img.src = icons[piece.color][piece.type];
+        img.alt = "";
+        img.draggable = false;
+        img.className = "piece-img";
+        pieceEl.appendChild(img);
 
         pieceEl.addEventListener("dragstart", (event) => {
           if (!canHumanMove) {
@@ -278,7 +284,6 @@ const renderMoveHistory = () => {
   }
 
   moveHistoryEl.innerHTML = moveHistory
-    .slice(0, 8)
     .map(
       (move, index) => `
         <div class="history-item">
@@ -288,6 +293,8 @@ const renderMoveHistory = () => {
       `,
     )
     .join("");
+
+  moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
 };
 
 const renderCaptured = (pieces, color) => {
@@ -298,7 +305,7 @@ const renderCaptured = (pieces, color) => {
   return pieces
     .map(
       (type) =>
-        `<span class="captured-piece ${color}">${icons[color][type]}</span>`,
+        `<img class="captured-piece" src="${icons[color][type]}" alt="${color} ${type}" draggable="false"/>`,
     )
     .join("");
 };
@@ -484,7 +491,7 @@ const showEndScreen = (winner, title, text) => {
 
   winnerIcon.innerHTML = `
     <span class="green-flag" aria-label="Winner flag"></span>
-    <span class="loser-king">${icons[loser].king}</span>
+    <img class="loser-king" src="${icons[loser].king}" alt="${loser} king" draggable="false"/>
   `;
 
   winnerTitle.textContent = title;
