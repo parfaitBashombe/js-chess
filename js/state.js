@@ -1,0 +1,15 @@
+export const state = {
+  board: null,
+  currentTurn: "white",
+  selectedSquare: null,
+  legalMovesForSelected: [],
+  capturedPieces: { white: [], black: [] },
+  lastMove: null,
+  enPassantTarget: null,
+  moveHistory: [],
+  statusMessage: "",
+  gameOver: false,
+  gameMode: "human",
+  botThinking: false,
+  botJobId: 0,
+};

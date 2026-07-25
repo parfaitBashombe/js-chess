@@ -1,6 +1,4 @@
-export const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
-
-export const icons = {
+export const pieceIcons = {
   white: {
     king:   "pieces/wK.svg",
     queen:  "pieces/wQ.svg",
@@ -17,13 +15,4 @@ export const icons = {
     knight: "pieces/bN.svg",
     pawn:   "pieces/bP.svg",
   },
-};
-
-export const values = {
-  pawn: 1,
-  knight: 3,
-  bishop: 3,
-  rook: 5,
-  queen: 9,
-  king: 0,
 };
