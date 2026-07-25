@@ -9,6 +9,7 @@ export const state = {
   moveHistory: [],
   statusMessage: "",
   gameOver: false,
+  winner: null,
   gameMode: "human",
   playerColorChoice: "white",
   playerColor: "white",

@@ -35,14 +35,9 @@ document.getElementById("resetBtn").addEventListener("click", showSetupOverlay);
 // ── End screen ────────────────────────────────────────────
 
 document.getElementById("playAgainBtn").addEventListener("click", startNewGame);
-document
-  .getElementById("newGameBtn")
-  .addEventListener("click", showSetupOverlay);
-
-document.getElementById("endScreen").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("endScreen")) {
-    document.getElementById("endScreen").classList.add("hidden");
-  }
+document.getElementById("newGameBtn").addEventListener("click", showSetupOverlay);
+document.getElementById("viewBoardBtn").addEventListener("click", () => {
+  document.getElementById("endScreen").classList.add("hidden");
 });
 
 // ── Boot ──────────────────────────────────────────────────

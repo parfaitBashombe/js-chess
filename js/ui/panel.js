@@ -37,6 +37,8 @@ const renderPlayerCards = (state) => {
   blackCard.classList.toggle("active",   state.currentTurn === "black" && !state.gameOver);
   whiteCard.classList.toggle("thinking", state.botThinking && botColor === "white");
   blackCard.classList.toggle("thinking", state.botThinking && botColor === "black");
+  whiteCard.classList.toggle("loser",    state.gameOver && state.winner === "black");
+  blackCard.classList.toggle("loser",    state.gameOver && state.winner === "white");
 
   whiteCard.querySelector(".player-status").textContent =
     state.currentTurn === "white" && !state.gameOver
