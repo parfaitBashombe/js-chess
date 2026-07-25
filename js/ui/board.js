@@ -20,6 +20,53 @@ export const renderBoard = (state, handlers) => {
       boardEl.appendChild(square);
     }
   }
+
+  if (state.animateMove) {
+    state.animateMove = false;
+    animateLastMove(state.lastMove, isFlipped, boardEl);
+  }
+};
+
+// FLIP technique: the piece is already at its destination after the re-render.
+// Offset it back to the source square (no transition), then release (with transition)
+// so CSS slides it smoothly into its natural position.
+const animatePiece = (boardEl, from, to, squareSize, isFlipped) => {
+  const toSquare = boardEl.querySelector(`[data-row="${to.row}"][data-col="${to.col}"]`);
+  if (!toSquare) return;
+  const pieceEl = toSquare.querySelector(".piece");
+  if (!pieceEl) return;
+
+  const deltaRow = from.row - to.row;
+  const deltaCol = from.col - to.col;
+  const dx = (isFlipped ? -deltaCol : deltaCol) * squareSize;
+  const dy = (isFlipped ? -deltaRow : deltaRow) * squareSize;
+
+  pieceEl.style.transition = "none";
+  pieceEl.style.transform  = `translate(${dx}px, ${dy}px)`;
+  pieceEl.offsetHeight; // force reflow so the browser registers the start position
+  pieceEl.style.transition = "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)";
+  pieceEl.style.transform  = "";
+};
+
+const animateLastMove = (lastMove, isFlipped, boardEl) => {
+  if (!lastMove) return;
+  const squareSize = boardEl.clientWidth / 8;
+  if (!squareSize) return;
+
+  animatePiece(boardEl, lastMove.from, lastMove.to, squareSize, isFlipped);
+
+  // Castling: king moved 2 squares — also slide the rook from its corner
+  if (Math.abs(lastMove.from.col - lastMove.to.col) === 2) {
+    const row        = lastMove.to.row;
+    const isKingside = lastMove.to.col === 6;
+    animatePiece(
+      boardEl,
+      { row, col: isKingside ? 7 : 0 },
+      { row, col: isKingside ? 5 : 3 },
+      squareSize,
+      isFlipped
+    );
+  }
 };
 
 const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, blackInCheck, handlers) => {
@@ -84,14 +131,6 @@ const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, black
 
   if (piece) {
     squareEl.appendChild(buildPieceElement(piece, row, col, state, handlers));
-    if (state.winner && piece.type === "king" && piece.color === state.winner) {
-      const crown = document.createElement("img");
-      crown.src = "icons/crown-green.svg";
-      crown.alt = "winner crown";
-      crown.draggable = false;
-      crown.className = "king-crown";
-      squareEl.appendChild(crown);
-    }
   }
 
   return squareEl;

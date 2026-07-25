@@ -391,6 +391,7 @@ h1 {
   place-items: center;
   cursor: grab;
   padding: 4%;
+  will-change: transform;
 }
 
 .piece.loser-king {

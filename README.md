@@ -188,26 +188,6 @@ js-chess/
 
 ---
 
-## Development History
-
-The project was built incrementally over a series of feature branches, each merged as a pull request:
-
-| Branch | What was built |
-|---|---|
-| `ft-setup` | Initial project scaffolding |
-| `ft-drag` | Drag-and-drop piece movement |
-| `ft-game` | Core game logic (turns, captures, win detection) |
-| `fx-pieces-mov` | Fixed movement bugs |
-| `fx-logic` | Consolidated everything into one file to fix module-scope bugs |
-| `ft-bot` | First version of the bot (basic move selection) |
-| `ft-improved-bot` | Minimax + alpha-beta pruning, evaluation tables |
-| `ft-redesign` | Full visual redesign — dark theme, SVG pieces |
-| `ft-refactor` | Split monolith back into the current module structure |
-| `ft-color-select` | Color/side selection, board flip, game-start flash animation |
-| `ft-endgame-ux` | Winner crown, loser highlight, view board button |
-
----
-
 ## Running Locally
 
 No build step required. Open `index.html` directly in a browser, or serve it with any static file server:

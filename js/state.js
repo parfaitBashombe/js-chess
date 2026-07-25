@@ -17,4 +17,5 @@ export const state = {
   botJobId: 0,
   overlayVisible: true,
   gameStarted: false,
+  animateMove: false,
 };
