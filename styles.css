@@ -92,6 +92,11 @@ button:focus-visible,
   overflow: hidden;
 }
 
+.game-area--flipped .topbar      { order: 1; }
+.game-area--flipped #whitePlayer { order: 2; }
+.game-area--flipped .board-frame { order: 3; }
+.game-area--flipped #blackPlayer { order: 4; }
+
 /* ── Topbar ──────────────────────────────────────────── */
 
 .topbar {
@@ -259,9 +264,21 @@ h1 {
   transform: scale(1.2);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .player-card.thinking {
+    animation: cardThinking 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes cardThinking {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(129, 182, 76, 0.18), var(--shadow-sm); }
+  50%       { box-shadow: 0 0 0 1px rgba(129, 182, 76, 0.55), 0 0 18px rgba(129, 182, 76, 0.18); }
+}
+
 /* ── Board ───────────────────────────────────────────── */
 
 .board-frame {
+  position: relative;
   width: var(--board-size);
   aspect-ratio: 1;
   padding: 8px;
@@ -570,6 +587,7 @@ h1 {
 
 .controls {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
@@ -629,6 +647,249 @@ h1 {
 
 .control-btn:hover {
   filter: brightness(1.12);
+}
+
+/* ── Secondary button ───────────────────────────────── */
+
+.control-btn--secondary {
+  background: var(--surface-raise);
+  color: var(--text-dim);
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+.control-btn--secondary:hover {
+  filter: none;
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.control-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Board overlay ───────────────────────────────────── */
+
+.board-overlay {
+  position: absolute;
+  inset: 8px;
+  z-index: 10;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.board-overlay--hidden {
+  display: none;
+}
+
+/* ── Start flash ──────────────────────────────────────── */
+
+.start-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.start-flash.hidden { display: none; }
+
+.start-flash-text {
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow:
+    0 0 28px rgba(129, 182, 76, 0.85),
+    0 2px 14px rgba(0, 0, 0, 0.95);
+  animation: startFlash 1.4s var(--ease-out) forwards;
+}
+
+@keyframes startFlash {
+  0%   { opacity: 0; transform: scale(0.82) translateY(8px); }
+  18%  { opacity: 1; transform: scale(1.05) translateY(0);   }
+  42%  { opacity: 1; transform: scale(1);                    }
+  100% { opacity: 0; transform: scale(1.1)  translateY(-6px); }
+}
+
+.board-overlay--setup {
+  background: rgba(10, 12, 16, 0.9);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Setup content */
+
+.overlay-setup {
+  position: relative;
+  width: min(280px, 86%);
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .board-overlay--setup .overlay-setup {
+    animation: cardIn 0.3s var(--ease-out) both;
+  }
+}
+
+.overlay-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface-raise);
+  color: var(--muted);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+
+.overlay-close:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.overlay-close.hidden {
+  display: none;
+}
+
+.overlay-kings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  width: 100%;
+}
+
+.overlay-kings img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+.overlay-vs {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.overlay-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+
+.overlay-modes {
+  width: 100%;
+}
+
+/* Play-as selector */
+
+.play-as-selector {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.play-as-selector.hidden { display: none; }
+
+.play-as-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.play-as-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.play-as-btn {
+  flex: 1;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.play-as-btn img {
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.play-as-btn:hover:not(.active) {
+  background: var(--surface-raise);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.play-as-btn.active {
+  background: rgba(129, 182, 76, 0.12);
+  border-color: var(--green-main);
+  color: var(--green-main);
+}
+
+.overlay-start-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--green-main);
+  color: #0d0f13;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 8px rgba(129, 182, 76, 0.35);
+  transition: filter 0.15s;
+}
+
+.overlay-start-btn:hover {
+  filter: brightness(1.12);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .overlay-start-btn {
+    transition: filter 0.15s, transform 0.1s;
+  }
+  .overlay-start-btn:active {
+    transform: scale(0.97);
+  }
 }
 
 /* ── End Screen ──────────────────────────────────────── */
@@ -731,6 +992,13 @@ h1 {
   color: var(--muted);
   font-size: 0.8rem;
   line-height: 1.45;
+}
+
+.end-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
 }
 
 .winner-card h2 {

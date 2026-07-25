@@ -1,13 +1,13 @@
 import { pieceIcons } from "../data/icons.js";
 import { piecePoints } from "../data/points.js";
-import { capitalize } from "../board/helpers.js";
+import { oppositeColor, capitalize } from "../board/helpers.js";
 
 export const renderPanel = (state) => {
   renderStatusCard(state);
   renderPlayerCards(state);
   renderCapturedPieces(state);
   renderMoveHistory(state);
-  renderModeButtons(state);
+  updateActionButtons(state);
 };
 
 const renderStatusCard = (state) => {
@@ -27,19 +27,25 @@ const renderStatusCard = (state) => {
 const renderPlayerCards = (state) => {
   const whiteCard = document.getElementById("whitePlayer");
   const blackCard = document.getElementById("blackPlayer");
-  const blackSub  = document.getElementById("blackSub");
 
-  blackSub.textContent = state.gameMode === "bot" ? "Bot" : "Player 2";
+  const botColor = state.gameMode === "bot" ? oppositeColor(state.playerColor) : null;
 
-  whiteCard.classList.toggle("active", state.currentTurn === "white" && !state.gameOver);
-  blackCard.classList.toggle("active", state.currentTurn === "black" && !state.gameOver);
+  whiteCard.querySelector(".player-sub").textContent = botColor === "white" ? "Bot" : "Player 1";
+  document.getElementById("blackSub").textContent    = botColor === "black" ? "Bot" : "Player 2";
+
+  whiteCard.classList.toggle("active",   state.currentTurn === "white" && !state.gameOver);
+  blackCard.classList.toggle("active",   state.currentTurn === "black" && !state.gameOver);
+  whiteCard.classList.toggle("thinking", state.botThinking && botColor === "white");
+  blackCard.classList.toggle("thinking", state.botThinking && botColor === "black");
 
   whiteCard.querySelector(".player-status").textContent =
-    state.currentTurn === "white" && !state.gameOver ? "Thinking" : "Waiting";
+    state.currentTurn === "white" && !state.gameOver
+      ? (botColor === "white" ? "Calculating" : "Thinking")
+      : "Waiting";
 
   blackCard.querySelector(".player-status").textContent =
     state.currentTurn === "black" && !state.gameOver
-      ? (state.gameMode === "bot" ? "Calculating" : "Thinking")
+      ? (botColor === "black" ? "Calculating" : "Thinking")
       : "Waiting";
 };
 
@@ -87,7 +93,8 @@ const renderMoveHistory = (state) => {
   moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
 };
 
-const renderModeButtons = (state) => {
-  document.getElementById("humanModeBtn").classList.toggle("active", state.gameMode === "human");
-  document.getElementById("botModeBtn").classList.toggle("active",   state.gameMode === "bot");
+const updateActionButtons = (state) => {
+  const canResign = !state.gameOver && !state.overlayVisible && state.moveHistory.length > 0;
+  const resignBtn = document.getElementById("resignBtn");
+  resignBtn.disabled = !canResign;
 };
