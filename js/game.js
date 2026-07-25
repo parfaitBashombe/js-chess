@@ -1,4 +1,5 @@
 import { state } from "./state.js";
+import { saveState, loadState } from "./persist.js";
 import { createInitialBoard, cloneBoard } from "./board/setup.js";
 import { oppositeColor, capitalize, toSquareName } from "./board/helpers.js";
 import { isKingInCheck } from "./board/check.js";
@@ -58,6 +59,21 @@ const updateGameAreaFlip = () => {
 // ── Public actions ────────────────────────────────────────
 
 export const initializeApp = () => {
+  const saved = loadState();
+
+  if (saved && saved.gameStarted) {
+    Object.assign(state, saved);
+    state.selectedSquare      = null;
+    state.legalMovesForSelected = [];
+    state.botThinking         = false;
+    state.botJobId            = 0;
+    state.animateMove         = false;
+    state.overlayVisible      = false;
+    render();
+    runBotIfNeeded();
+    return;
+  }
+
   state.board = createInitialBoard();
   state.currentTurn = "white";
   state.selectedSquare = null;
@@ -100,6 +116,7 @@ export const startNewGame = () => {
   clearTimeout(endScreenTimeout);
   document.getElementById("endScreen").classList.add("hidden");
   render();
+  saveState(state);
   showStartFlash();
   runBotIfNeeded();
 };
@@ -165,6 +182,7 @@ export const resign = () => {
   state.statusMessage = `${capitalize(loser)} resigned.`;
 
   render();
+  saveState(state);
   queueEndScreen(winner, `${capitalize(winner)} wins`, `${capitalize(loser)} resigned.`);
 };
 
@@ -314,6 +332,7 @@ const executeMove = (fromRow, fromCol, move) => {
   updateGameStatus(originalColor);
   state.animateMove = true;
   render();
+  saveState(state);
   runBotIfNeeded();
 };
 
