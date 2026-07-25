@@ -312,6 +312,7 @@ const executeMove = (fromRow, fromCol, move) => {
   state.legalMovesForSelected = [];
 
   updateGameStatus(originalColor);
+  state.animateMove = true;
   render();
   runBotIfNeeded();
 };

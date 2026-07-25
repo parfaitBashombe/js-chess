@@ -15,7 +15,6 @@ export const showEndScreen = (winner, title, description) => {
   } else {
     const loser = oppositeColor(winner);
     winnerIcon.innerHTML = `
-      <span class="green-flag" aria-label="Winner flag"></span>
       <img class="loser-king" src="${pieceIcons[loser].king}" alt="${loser} king" draggable="false"/>
     `;
   }
