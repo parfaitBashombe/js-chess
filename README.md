@@ -61,7 +61,6 @@ A persistent sidebar tracks the game in real time:
 When the game ends, the board stays alive for 3 seconds so both players can see the final position. Then an end screen slides in with:
 
 - The result (checkmate, stalemate, or resignation)
-- A crown on the winning king's square
 - The losing king dimmed with a visual indicator
 - Options to play again with the same settings or start a new game from the setup screen
 - A "View board" button to dismiss the overlay and study the final position
@@ -185,6 +184,16 @@ js-chess/
         ├── panel.js            # Renders the side panel (history, captures, status)
         └── end-screen.js       # Shows the winner card after a game ends
 ```
+
+---
+
+## Game State Persistence
+
+The game is automatically saved to `localStorage` after every move, when a new game starts, and when a player resigns. If you close the tab or refresh the page mid-game, everything is restored exactly as you left it — the board position, captured pieces, move history, whose turn it is, and which mode and color you were playing.
+
+The following is saved: board, current turn, captured pieces, last move, en passant target, move history, game mode, player color, and game-over state. Transient UI state (selected piece, legal move highlights, bot thinking flag) is intentionally excluded and resets cleanly on restore.
+
+If the bot was thinking when you closed the page, it picks up its turn automatically on restore.
 
 ---
 
