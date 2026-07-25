@@ -5,21 +5,24 @@ import { toSquareName } from "../board/helpers.js";
 const columnLetters = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 export const renderBoard = (state, handlers) => {
-  const boardEl       = document.getElementById("board");
-  const whiteInCheck  = isKingInCheck(state.board, "white");
-  const blackInCheck  = isKingInCheck(state.board, "black");
+  const boardEl      = document.getElementById("board");
+  const whiteInCheck = isKingInCheck(state.board, "white");
+  const blackInCheck = isKingInCheck(state.board, "black");
+  const isFlipped    = state.playerColor === "black";
 
   boardEl.innerHTML = "";
 
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const square = buildSquare(row, col, state, whiteInCheck, blackInCheck, handlers);
+  for (let vRow = 0; vRow < 8; vRow++) {
+    for (let vCol = 0; vCol < 8; vCol++) {
+      const row = isFlipped ? 7 - vRow : vRow;
+      const col = isFlipped ? 7 - vCol : vCol;
+      const square = buildSquare(row, col, vRow, vCol, isFlipped, state, whiteInCheck, blackInCheck, handlers);
       boardEl.appendChild(square);
     }
   }
 };
 
-const buildSquare = (row, col, state, whiteInCheck, blackInCheck, handlers) => {
+const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, blackInCheck, handlers) => {
   const isLightSquare = (row + col) % 2 === 0;
   const piece         = state.board[row][col];
   const legalMove     = state.legalMovesForSelected.find(m => m.row === row && m.col === col);
@@ -42,14 +45,14 @@ const buildSquare = (row, col, state, whiteInCheck, blackInCheck, handlers) => {
     }
   }
 
-  if (col === 0) {
+  if (vCol === 0) {
     const rankLabel = document.createElement("span");
     rankLabel.className   = "rank-label";
-    rankLabel.textContent = 8 - row;
+    rankLabel.textContent = isFlipped ? vRow + 1 : 8 - row;
     squareEl.appendChild(rankLabel);
   }
 
-  if (row === 7) {
+  if (vRow === 7) {
     const fileLabel = document.createElement("span");
     fileLabel.className   = "file-label";
     fileLabel.textContent = columnLetters[col];
@@ -87,11 +90,12 @@ const buildSquare = (row, col, state, whiteInCheck, blackInCheck, handlers) => {
 };
 
 const buildPieceElement = (piece, row, col, state, handlers) => {
+  const isBotTurn = state.gameMode === "bot" && state.currentTurn !== state.playerColor;
   const canPlayerMovePiece =
     piece.color === state.currentTurn &&
     !state.gameOver &&
     !state.botThinking &&
-    !(state.gameMode === "bot" && state.currentTurn === "black");
+    !isBotTurn;
 
   const pieceEl = document.createElement("div");
   pieceEl.className  = `piece ${piece.color}`;

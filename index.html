@@ -38,6 +38,44 @@
         </div>
 
         <div class="board-frame">
+
+          <div class="board-overlay board-overlay--setup" id="boardOverlay">
+            <div class="overlay-setup">
+              <button class="overlay-close hidden" id="overlayCloseBtn" type="button" aria-label="Cancel">✕</button>
+              <div class="overlay-kings">
+                <img src="pieces/wK.svg" alt="" draggable="false" />
+                <span class="overlay-vs">vs</span>
+                <img src="pieces/bK.svg" alt="" draggable="false" />
+              </div>
+              <p class="eyebrow" style="color: var(--green-main);">Ready to play</p>
+              <h2 class="overlay-title">Chess Arena</h2>
+              <div class="mode-controls overlay-modes">
+                <button class="mode-btn active" id="overlayHumanBtn" type="button">2 Players</button>
+                <button class="mode-btn" id="overlayBotBtn" type="button">Vs Bot</button>
+              </div>
+
+              <div class="play-as-selector hidden" id="playAsSelector">
+                <p class="play-as-label">Play as</p>
+                <div class="play-as-btns">
+                  <button class="play-as-btn active" id="playAsWhiteBtn" type="button" title="Play as White">
+                    <img src="pieces/wK.svg" alt="White" draggable="false" />
+                  </button>
+                  <button class="play-as-btn" id="playAsRandomBtn" type="button" title="Random">?</button>
+                  <button class="play-as-btn" id="playAsBlackBtn" type="button" title="Play as Black">
+                    <img src="pieces/bK.svg" alt="Black" draggable="false" />
+                  </button>
+                </div>
+              </div>
+
+              <button class="overlay-start-btn" id="overlayStartBtn" type="button">Start game</button>
+            </div>
+
+          </div>
+
+          <div class="start-flash hidden" id="startFlash">
+            <span class="start-flash-text">Game start</span>
+          </div>
+
           <div class="board" id="board" aria-label="Chess board"></div>
         </div>
 
@@ -94,15 +132,9 @@
         </section>
 
         <div class="controls">
-          <div class="mode-controls">
-            <button class="mode-btn active" id="humanModeBtn" type="button">
-              2 Players
-            </button>
-            <button class="mode-btn" id="botModeBtn" type="button">
-              Vs Bot
-            </button>
-          </div>
-
+          <button class="control-btn control-btn--secondary" id="resignBtn" type="button" disabled>
+            Resign
+          </button>
           <button class="control-btn" id="resetBtn" type="button">
             New game
           </button>
@@ -118,9 +150,14 @@
         <p class="winner-help">
           Click outside this banner to review the board and moves.
         </p>
-        <button class="control-btn" id="playAgainBtn" type="button">
-          Play again
-        </button>
+        <div class="end-actions">
+          <button class="control-btn control-btn--secondary" id="newGameBtn" type="button">
+            New game
+          </button>
+          <button class="control-btn" id="playAgainBtn" type="button">
+            Play again
+          </button>
+        </div>
       </div>
     </div>
 

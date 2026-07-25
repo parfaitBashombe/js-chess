@@ -10,6 +10,10 @@ export const state = {
   statusMessage: "",
   gameOver: false,
   gameMode: "human",
+  playerColorChoice: "white",
+  playerColor: "white",
   botThinking: false,
   botJobId: 0,
+  overlayVisible: true,
+  gameStarted: false,
 };
