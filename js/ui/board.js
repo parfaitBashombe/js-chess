@@ -84,6 +84,14 @@ const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, black
 
   if (piece) {
     squareEl.appendChild(buildPieceElement(piece, row, col, state, handlers));
+    if (state.winner && piece.type === "king" && piece.color === state.winner) {
+      const crown = document.createElement("img");
+      crown.src = "icons/crown-green.svg";
+      crown.alt = "winner crown";
+      crown.draggable = false;
+      crown.className = "king-crown";
+      squareEl.appendChild(crown);
+    }
   }
 
   return squareEl;
@@ -97,8 +105,10 @@ const buildPieceElement = (piece, row, col, state, handlers) => {
     !state.botThinking &&
     !isBotTurn;
 
+  const isLoserKing = state.winner && piece.type === "king" && piece.color !== state.winner;
+
   const pieceEl = document.createElement("div");
-  pieceEl.className  = `piece ${piece.color}`;
+  pieceEl.className  = `piece ${piece.color}${isLoserKing ? " loser-king" : ""}`;
   pieceEl.draggable  = canPlayerMovePiece;
   pieceEl.setAttribute("aria-label", `${piece.color} ${piece.type}`);
 

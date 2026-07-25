@@ -68,6 +68,7 @@ export const initializeApp = () => {
   state.moveHistory = [];
   state.statusMessage = "White to move.";
   state.gameOver = false;
+  state.winner = null;
   state.botThinking = false;
   state.overlayVisible = true;
   state.gameStarted = false;
@@ -86,6 +87,7 @@ export const startNewGame = () => {
   state.moveHistory = [];
   state.statusMessage = "White to move.";
   state.gameOver = false;
+  state.winner = null;
   state.botThinking = false;
   state.overlayVisible = false;
   state.gameStarted = true;
@@ -95,10 +97,21 @@ export const startNewGame = () => {
       ? Math.random() < 0.5 ? "white" : "black"
       : state.playerColorChoice;
 
+  clearTimeout(endScreenTimeout);
   document.getElementById("endScreen").classList.add("hidden");
   render();
   showStartFlash();
   runBotIfNeeded();
+};
+
+let endScreenTimeout = null;
+
+const queueEndScreen = (winner, title, description) => {
+  state.winner = winner;
+  render();
+  endScreenTimeout = window.setTimeout(() => {
+    showEndScreen(winner, title, description);
+  }, 3000);
 };
 
 const showStartFlash = () => {
@@ -117,6 +130,8 @@ export const showSetupOverlay = () => {
   state.botJobId += 1;
   state.botThinking = false;
   state.overlayVisible = true;
+  state.winner = null;
+  clearTimeout(endScreenTimeout);
   render();
 };
 
@@ -146,14 +161,11 @@ export const resign = () => {
   const winner = oppositeColor(loser);
 
   state.gameOver = true;
+  state.winner = winner;
   state.statusMessage = `${capitalize(loser)} resigned.`;
 
-  showEndScreen(
-    winner,
-    `${capitalize(winner)} wins`,
-    `${capitalize(loser)} resigned.`,
-  );
   render();
+  queueEndScreen(winner, `${capitalize(winner)} wins`, `${capitalize(loser)} resigned.`);
 };
 
 // ── Input handlers ────────────────────────────────────────
@@ -335,7 +347,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   if (nextPlayerMoves.length === 0 && nextPlayerInCheck) {
     state.gameOver = true;
     state.statusMessage = `Checkmate. ${capitalize(lastPlayerToMove)} wins.`;
-    showEndScreen(
+    queueEndScreen(
       lastPlayerToMove,
       `${capitalize(lastPlayerToMove)} wins`,
       `Checkmate. ${capitalize(state.currentTurn)} has no legal moves left.`,
@@ -346,7 +358,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   if (nextPlayerMoves.length === 0) {
     state.gameOver = true;
     state.statusMessage = "Stalemate. The game is a draw.";
-    showEndScreen(
+    queueEndScreen(
       null,
       "Draw",
       "Stalemate — the player to move has no legal moves but is not in check.",
