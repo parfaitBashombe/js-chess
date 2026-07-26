@@ -29,20 +29,33 @@ export const hashBoard = (board, colorToMove, enPassantTarget) => {
   return h >>> 0;
 };
 
-// Entries are stored as { depth, score }.
-// Replace-if-deeper: only overwrite an existing entry if the new search
-// is at least as deep, ensuring we always keep the most-searched result.
-const MAX_ENTRIES = 200_000;
-const table       = new Map();
+// Flag types for proper alpha-beta bounds storage.
+export const TT_EXACT = 0; // exact minimax value
+export const TT_LOWER = 1; // fail-high: true score >= stored score
+export const TT_UPPER = 2; // fail-low:  true score <= stored score
 
-export const ttGet = (hash, depth) => {
+const MAX_SIZE = 1_000_000;
+const table    = new Map();
+
+export const ttGet = (hash, depth, alpha, beta) => {
   const e = table.get(hash);
-  return e && e.depth >= depth ? e.score : null;
+  if (!e || e.depth < depth) return null;
+  if (e.flag === TT_EXACT)                     return e.score;
+  if (e.flag === TT_LOWER && e.score >= beta)  return e.score;
+  if (e.flag === TT_UPPER && e.score <= alpha) return e.score;
+  return null;
 };
 
-export const ttSet = (hash, depth, score) => {
-  const existing = table.get(hash);
-  if (existing && existing.depth > depth) return;
-  if (table.size >= MAX_ENTRIES && !existing) return;
-  table.set(hash, { depth, score });
+// Returns the best move stored for this position regardless of depth.
+// Used to seed move ordering in iterative deepening.
+export const ttGetMove = (hash) => {
+  const e = table.get(hash);
+  return e?.move ?? null;
+};
+
+export const ttSet = (hash, depth, score, flag, move = null) => {
+  const e = table.get(hash);
+  if (e && e.depth > depth) return;
+  if (table.size >= MAX_SIZE && !e) table.clear();
+  table.set(hash, { depth, score, flag, move });
 };

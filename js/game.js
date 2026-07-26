@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { saveState, loadState } from "./persist.js";
-import { createInitialBoard, cloneBoard } from "./board/setup.js";
+import { createInitialBoard } from "./board/setup.js";
 import { oppositeColor, capitalize, toSquareName } from "./board/helpers.js";
 import { isKingInCheck } from "./board/check.js";
 import { applyMoveToBoard } from "./board/apply-move.js";
@@ -8,10 +8,45 @@ import {
   getAllLegalMovesForColor,
   getLegalMovesForPiece,
 } from "./board/legal-moves.js";
-import { findBestMove } from "./bot/index.js";
 import { renderBoard } from "./ui/board.js";
 import { renderPanel } from "./ui/panel.js";
 import { showEndScreen } from "./ui/end-screen.js";
+
+// ── Bot Web Worker ────────────────────────────────────────
+const botWorker = new Worker(new URL("./bot/worker.js", import.meta.url), { type: "module" });
+
+botWorker.onmessage = ({ data }) => {
+  const { result, jobId } = data;
+  if (jobId !== state.botJobId) return;
+
+  const botColor = oppositeColor(state.playerColor);
+  if (state.gameOver || state.gameMode !== "bot" || state.currentTurn !== botColor) return;
+
+  if (!result?.move) {
+    state.botThinking = false;
+    render();
+    return;
+  }
+
+  const elapsed = performance.now() - botMoveStartTime;
+  const remaining = BOT_MIN_DELAY_MS - elapsed;
+
+  const playMove = () => {
+    state.botThinking = false;
+    executeMove(result.move.from.row, result.move.from.col, result.move.to);
+  };
+
+  if (remaining > 0) {
+    setTimeout(playMove, remaining);
+  } else {
+    playMove();
+  }
+};
+
+botWorker.onerror = () => {
+  state.botThinking = false;
+  render();
+};
 
 // ── Render ────────────────────────────────────────────────
 
@@ -223,6 +258,8 @@ const handleSquareClick = (row, col) => {
 };
 
 const handleDragStart = (row, col) => {
+  if (state.gameOver || state.botThinking) return;
+  if (state.gameMode === "bot" && state.currentTurn !== state.playerColor) return;
   state.selectedSquare = { row, col };
   state.legalMovesForSelected = getLegalMovesForPiece(
     state.board,
@@ -400,6 +437,9 @@ const updateGameStatus = (lastPlayerToMove) => {
   state.statusMessage = `${capitalize(state.currentTurn)} to move.`;
 };
 
+let botMoveStartTime = 0;
+const BOT_MIN_DELAY_MS = 500;
+
 const runBotIfNeeded = () => {
   if (state.gameOver) return;
   if (state.gameMode !== "bot") return;
@@ -409,31 +449,16 @@ const runBotIfNeeded = () => {
 
   state.botThinking = true;
   state.statusMessage = "Bot is thinking.";
+  botMoveStartTime = performance.now();
   render();
 
   const jobId = ++state.botJobId;
 
-  window.setTimeout(() => {
-    if (jobId !== state.botJobId) return;
-    if (state.gameOver || state.gameMode !== "bot" || state.currentTurn !== botColor) return;
-
-    const startTime = performance.now();
-    const result = findBestMove(cloneBoard(state.board), botColor, state.enPassantTarget);
-    const elapsed = performance.now() - startTime;
-    const minimumDelay = Math.max(80, 320 - elapsed);
-
-    window.setTimeout(() => {
-      if (jobId !== state.botJobId) return;
-      if (state.gameOver || state.gameMode !== "bot" || state.currentTurn !== botColor) return;
-
-      state.botThinking = false;
-
-      if (!result?.move) {
-        render();
-        return;
-      }
-
-      executeMove(result.move.from.row, result.move.from.col, result.move.to);
-    }, minimumDelay);
-  }, 80);
+  botWorker.postMessage({
+    board: state.board,
+    color: botColor,
+    enPassantTarget: state.enPassantTarget,
+    timeLimitMs: 1500,
+    jobId,
+  });
 };
