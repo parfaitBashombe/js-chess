@@ -15,6 +15,14 @@ const renderStatusCard = (state) => {
   const turnBadge  = document.getElementById("turnBadge");
   const botLoader  = document.getElementById("botLoader");
 
+  if (state.reviewIndex !== null) {
+    const total = state.positionHistory.length;
+    statusText.textContent = `Reviewing move ${state.reviewIndex + 1} of ${total}`;
+    turnBadge.textContent  = "Review";
+    botLoader.classList.add("hidden");
+    return;
+  }
+
   statusText.textContent = state.statusMessage;
 
   if (state.gameOver)       turnBadge.textContent = "Game over";
@@ -33,8 +41,8 @@ const renderPlayerCards = (state) => {
   whiteCard.querySelector(".player-sub").textContent = botColor === "white" ? "Bot" : "Player 1";
   document.getElementById("blackSub").textContent    = botColor === "black" ? "Bot" : "Player 2";
 
-  whiteCard.classList.toggle("active",   state.currentTurn === "white" && !state.gameOver);
-  blackCard.classList.toggle("active",   state.currentTurn === "black" && !state.gameOver);
+  whiteCard.classList.toggle("active",   state.currentTurn === "white" && !state.gameOver && state.reviewIndex === null);
+  blackCard.classList.toggle("active",   state.currentTurn === "black" && !state.gameOver && state.reviewIndex === null);
   whiteCard.classList.toggle("thinking", state.botThinking && botColor === "white");
   blackCard.classList.toggle("thinking", state.botThinking && botColor === "black");
   whiteCard.classList.toggle("loser",    state.gameOver && state.winner === "black");
@@ -52,16 +60,19 @@ const renderPlayerCards = (state) => {
 };
 
 const renderCapturedPieces = (state) => {
+  const snap = state.reviewIndex !== null ? state.positionHistory[state.reviewIndex] : null;
+  const cp   = snap ? snap.capturedPieces : state.capturedPieces;
+
   const whiteCapturedEl = document.getElementById("whiteCaptured");
   const blackCapturedEl = document.getElementById("blackCaptured");
   const whiteScoreEl    = document.getElementById("whiteScore");
   const blackScoreEl    = document.getElementById("blackScore");
 
-  whiteCapturedEl.innerHTML = buildCapturedHtml(state.capturedPieces.black, "black");
-  blackCapturedEl.innerHTML = buildCapturedHtml(state.capturedPieces.white, "white");
+  whiteCapturedEl.innerHTML = buildCapturedHtml(cp.black, "black");
+  blackCapturedEl.innerHTML = buildCapturedHtml(cp.white, "white");
 
-  whiteScoreEl.textContent = `${sumPoints(state.capturedPieces.black)} pts`;
-  blackScoreEl.textContent = `${sumPoints(state.capturedPieces.white)} pts`;
+  whiteScoreEl.textContent = `${sumPoints(cp.black)} pts`;
+  blackScoreEl.textContent = `${sumPoints(cp.white)} pts`;
 };
 
 const buildCapturedHtml = (capturedTypes, color) => {
@@ -84,19 +95,33 @@ const renderMoveHistory = (state) => {
   }
 
   moveHistoryEl.innerHTML = state.moveHistory
-    .map((moveText, index) => `
-      <div class="history-item">
+    .map((moveText, index) => {
+      const isActive = state.reviewIndex === index;
+      return `<div class="history-item${isActive ? " history-item--active" : ""}" data-move-index="${index}">
         <span class="history-number">${String(index + 1).padStart(2, "0")}</span>
         <span>${moveText}</span>
-      </div>
-    `)
+      </div>`;
+    })
     .join("");
 
-  moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
+  if (state.reviewIndex !== null) {
+    const activeEl = moveHistoryEl.querySelector(".history-item--active");
+    if (activeEl) activeEl.scrollIntoView({ block: "nearest" });
+  } else {
+    moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
+  }
 };
 
 const updateActionButtons = (state) => {
   const canResign = !state.gameOver && !state.overlayVisible && state.moveHistory.length > 0;
-  const resignBtn = document.getElementById("resignBtn");
-  resignBtn.disabled = !canResign;
+  document.getElementById("resignBtn").disabled = !canResign;
+
+  const hasMoves = state.positionHistory.length > 0;
+  const atStart  = state.reviewIndex === 0;
+  const atEnd    = state.reviewIndex !== null && state.reviewIndex >= state.positionHistory.length - 1;
+  const isLive   = state.reviewIndex === null;
+
+  document.getElementById("prevMoveBtn").disabled = !hasMoves || atStart;
+  document.getElementById("nextMoveBtn").disabled = isLive || atEnd;
+  document.getElementById("liveMoveBtn").disabled = isLive;
 };

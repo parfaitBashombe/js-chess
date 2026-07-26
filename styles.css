@@ -579,6 +579,52 @@ h1 {
   gap: 8px;
 }
 
+.moves-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nav-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-raise);
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.nav-btn--live {
+  background: rgba(129, 182, 76, 0.1);
+  border-color: rgba(129, 182, 76, 0.28);
+  color: var(--green-main);
+}
+
+.nav-btn--live:hover:not(:disabled) {
+  background: rgba(129, 182, 76, 0.2);
+}
+
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .history-list {
   min-height: 0;
   display: grid;
@@ -606,6 +652,19 @@ h1 {
   color: var(--text-dim);
   font-size: 0.78rem;
   line-height: 1.35;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.history-item--active {
+  background: rgba(129, 182, 76, 0.1);
+  border-color: rgba(129, 182, 76, 0.35) !important;
+  color: var(--text);
 }
 
 .history-number {

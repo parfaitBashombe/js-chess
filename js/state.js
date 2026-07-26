@@ -7,6 +7,8 @@ export const state = {
   lastMove: null,
   enPassantTarget: null,
   moveHistory: [],
+  positionHistory: [],
+  reviewIndex: null,
   statusMessage: "",
   gameOver: false,
   winner: null,

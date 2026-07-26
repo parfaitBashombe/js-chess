@@ -5,9 +5,14 @@ import { toSquareName } from "../board/helpers.js";
 const columnLetters = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 export const renderBoard = (state, handlers) => {
+  const reviewing      = state.reviewIndex !== null;
+  const snap           = reviewing ? state.positionHistory[state.reviewIndex] : null;
+  const displayBoard   = snap ? snap.board    : state.board;
+  const displayLastMove = snap ? snap.lastMove : state.lastMove;
+
   const boardEl      = document.getElementById("board");
-  const whiteInCheck = isKingInCheck(state.board, "white");
-  const blackInCheck = isKingInCheck(state.board, "black");
+  const whiteInCheck = isKingInCheck(displayBoard, "white");
+  const blackInCheck = isKingInCheck(displayBoard, "black");
   const isFlipped    = state.playerColor === "black";
 
   boardEl.innerHTML = "";
@@ -16,14 +21,18 @@ export const renderBoard = (state, handlers) => {
     for (let vCol = 0; vCol < 8; vCol++) {
       const row = isFlipped ? 7 - vRow : vRow;
       const col = isFlipped ? 7 - vCol : vCol;
-      const square = buildSquare(row, col, vRow, vCol, isFlipped, state, whiteInCheck, blackInCheck, handlers);
+      const square = buildSquare(
+        row, col, vRow, vCol, isFlipped,
+        state, displayBoard, displayLastMove,
+        whiteInCheck, blackInCheck, handlers, reviewing
+      );
       boardEl.appendChild(square);
     }
   }
 
-  if (state.animateMove) {
+  if (state.animateMove && !reviewing) {
     state.animateMove = false;
-    animateLastMove(state.lastMove, isFlipped, boardEl);
+    animateLastMove(displayLastMove, isFlipped, boardEl);
   }
 };
 
@@ -69,10 +78,10 @@ const animateLastMove = (lastMove, isFlipped, boardEl) => {
   }
 };
 
-const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, blackInCheck, handlers) => {
+const buildSquare = (row, col, vRow, vCol, isFlipped, state, displayBoard, displayLastMove, whiteInCheck, blackInCheck, handlers, reviewing) => {
   const isLightSquare = (row + col) % 2 === 0;
-  const piece         = state.board[row][col];
-  const legalMove     = state.legalMovesForSelected.find(m => m.row === row && m.col === col);
+  const piece         = displayBoard[row][col];
+  const legalMove     = reviewing ? null : state.legalMovesForSelected.find(m => m.row === row && m.col === col);
 
   const squareEl = document.createElement("div");
   squareEl.className  = `square ${isLightSquare ? "light" : "dark"}`;
@@ -82,8 +91,8 @@ const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, black
   squareEl.setAttribute("role", "button");
   squareEl.setAttribute("aria-label", toSquareName(row, col));
 
-  if (isPartOfLastMove(row, col, state.lastMove))       squareEl.classList.add("last-move");
-  if (isSelectedSquare(row, col, state.selectedSquare)) squareEl.classList.add("selected");
+  if (isPartOfLastMove(row, col, displayLastMove))            squareEl.classList.add("last-move");
+  if (!reviewing && isSelectedSquare(row, col, state.selectedSquare)) squareEl.classList.add("selected");
   if (legalMove) squareEl.classList.add(legalMove.capture ? "capture" : "legal");
 
   if (piece?.type === "king") {
@@ -130,15 +139,16 @@ const buildSquare = (row, col, vRow, vCol, isFlipped, state, whiteInCheck, black
   });
 
   if (piece) {
-    squareEl.appendChild(buildPieceElement(piece, row, col, state, handlers));
+    squareEl.appendChild(buildPieceElement(piece, row, col, state, handlers, reviewing));
   }
 
   return squareEl;
 };
 
-const buildPieceElement = (piece, row, col, state, handlers) => {
+const buildPieceElement = (piece, row, col, state, handlers, reviewing) => {
   const isBotTurn = state.gameMode === "bot" && state.currentTurn !== state.playerColor;
   const canPlayerMovePiece =
+    !reviewing &&
     piece.color === state.currentTurn &&
     !state.gameOver &&
     !state.botThinking &&
@@ -177,3 +187,4 @@ const isPartOfLastMove = (row, col, lastMove) =>
 
 const isSelectedSquare = (row, col, selectedSquare) =>
   selectedSquare && selectedSquare.row === row && selectedSquare.col === col;
+

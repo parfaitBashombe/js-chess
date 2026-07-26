@@ -8,6 +8,7 @@ const PERSISTENT_FIELDS = [
   "lastMove",
   "enPassantTarget",
   "moveHistory",
+  "positionHistory",
   "statusMessage",
   "gameOver",
   "winner",

@@ -12,6 +12,10 @@ import { renderBoard } from "./ui/board.js";
 import { renderPanel } from "./ui/panel.js";
 import { showEndScreen } from "./ui/end-screen.js";
 
+// ── History helpers ───────────────────────────────────────
+
+const deepCopyBoard = (board) => board.map(row => row.map(p => p ? { ...p } : null));
+
 // ── Bot Web Worker ────────────────────────────────────────
 const botWorker = new Worker(new URL("./bot/worker.js", import.meta.url), { type: "module" });
 
@@ -104,6 +108,8 @@ export const initializeApp = () => {
     state.botJobId            = 0;
     state.animateMove         = false;
     state.overlayVisible      = false;
+    state.reviewIndex         = null;
+    if (!state.positionHistory) state.positionHistory = [];
     render();
     runBotIfNeeded();
     return;
@@ -117,6 +123,8 @@ export const initializeApp = () => {
   state.lastMove = null;
   state.enPassantTarget = null;
   state.moveHistory = [];
+  state.positionHistory = [];
+  state.reviewIndex = null;
   state.statusMessage = "White to move.";
   state.gameOver = false;
   state.winner = null;
@@ -136,6 +144,8 @@ export const startNewGame = () => {
   state.lastMove = null;
   state.enPassantTarget = null;
   state.moveHistory = [];
+  state.positionHistory = [];
+  state.reviewIndex     = null;
   state.statusMessage = "White to move.";
   state.gameOver = false;
   state.winner = null;
@@ -183,6 +193,7 @@ export const showSetupOverlay = () => {
   state.botThinking = false;
   state.overlayVisible = true;
   state.winner = null;
+  state.reviewIndex = null;
   clearTimeout(endScreenTimeout);
   render();
 };
@@ -206,6 +217,8 @@ export const resign = () => {
   if (state.gameOver || state.overlayVisible || state.moveHistory.length === 0)
     return;
 
+  state.reviewIndex = null;
+
   state.botJobId += 1;
   state.botThinking = false;
 
@@ -224,6 +237,7 @@ export const resign = () => {
 // ── Input handlers ────────────────────────────────────────
 
 const handleSquareClick = (row, col) => {
+  if (state.reviewIndex !== null) return;
   if (state.gameOver || state.botThinking) return;
   if (state.gameMode === "bot" && state.currentTurn !== state.playerColor) return;
 
@@ -258,6 +272,7 @@ const handleSquareClick = (row, col) => {
 };
 
 const handleDragStart = (row, col) => {
+  if (state.reviewIndex !== null) return;
   if (state.gameOver || state.botThinking) return;
   if (state.gameMode === "bot" && state.currentTurn !== state.playerColor) return;
   state.selectedSquare = { row, col };
@@ -276,6 +291,7 @@ const handleDragEnd = () => {
 };
 
 const handleDrop = (row, col, sourceRow, sourceCol) => {
+  if (state.reviewIndex !== null) return;
   if (state.gameOver || state.botThinking) return;
 
   const legalMoves = getLegalMovesForPiece(
@@ -363,6 +379,14 @@ const executeMove = (fromRow, fromCol, move) => {
   );
 
   state.currentTurn = oppositeColor(state.currentTurn);
+  state.positionHistory.push({
+    board: deepCopyBoard(state.board),
+    currentTurn: state.currentTurn,
+    enPassantTarget: state.enPassantTarget,
+    capturedPieces: { white: [...state.capturedPieces.white], black: [...state.capturedPieces.black] },
+    lastMove: state.lastMove,
+  });
+
   state.selectedSquare = null;
   state.legalMovesForSelected = [];
 
@@ -461,4 +485,41 @@ const runBotIfNeeded = () => {
     timeLimitMs: 1500,
     jobId,
   });
+};
+
+// ── Move history navigation ───────────────────────────────
+
+export const goToMove = (index) => {
+  if (index < 0 || index >= state.positionHistory.length) return;
+  state.reviewIndex = index;
+  state.selectedSquare = null;
+  state.legalMovesForSelected = [];
+  render();
+};
+
+export const goToPreviousMove = () => {
+  if (state.positionHistory.length === 0) return;
+  if (state.reviewIndex === 0) return;
+  state.reviewIndex = state.reviewIndex === null
+    ? state.positionHistory.length - 1
+    : state.reviewIndex - 1;
+  state.selectedSquare = null;
+  state.legalMovesForSelected = [];
+  render();
+};
+
+export const goToNextMove = () => {
+  if (state.reviewIndex === null) return;
+  if (state.reviewIndex >= state.positionHistory.length - 1) return;
+  state.reviewIndex += 1;
+  state.selectedSquare = null;
+  state.legalMovesForSelected = [];
+  render();
+};
+
+export const goToLivePosition = () => {
+  state.reviewIndex = null;
+  state.selectedSquare = null;
+  state.legalMovesForSelected = [];
+  render();
 };

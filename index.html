@@ -125,7 +125,14 @@
         </section>
 
         <section class="panel-section moves-section">
-          <h2 class="panel-title">Moves</h2>
+          <div class="moves-header">
+            <h2 class="panel-title">Moves</h2>
+            <div class="nav-controls">
+              <button class="nav-btn" id="prevMoveBtn" type="button" aria-label="Previous move" disabled>‹</button>
+              <button class="nav-btn" id="nextMoveBtn" type="button" aria-label="Next move" disabled>›</button>
+              <button class="nav-btn nav-btn--live" id="liveMoveBtn" type="button" disabled>Live</button>
+            </div>
+          </div>
           <div class="history-list" id="moveHistory">
             <p class="empty-text">No moves yet.</p>
           </div>
