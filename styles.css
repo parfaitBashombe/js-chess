@@ -969,6 +969,16 @@ h1 {
   color: var(--green-main);
 }
 
+/* Difficulty selector */
+
+.difficulty-selector {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.difficulty-selector.hidden { display: none; }
+
 .overlay-start-btn {
   width: 100%;
   border: 0;
