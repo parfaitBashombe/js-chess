@@ -5,17 +5,35 @@ import { getNextBoardState } from "./next-state.js";
 import { minimax, setDeadline, isTimedOut } from "./search.js";
 import { resetKillers, resetHistory } from "./search-state.js";
 import { getBookMove } from "./opening-book.js";
+import { setEvalFlags } from "./evaluate.js";
 
-export const findBestMove = (board, color, enPassantTarget, timeLimitMs = 1500) => {
-  const bookMove = getBookMove(board, color, enPassantTarget);
-  if (bookMove) return { move: bookMove, depth: 0, score: 0 };
+const DIFFICULTY_CONFIGS = {
+  beginner:     { timeLimitMs: 150,  openingBook: false, randomChance: 0.4, evalFlags: { pawnStructure: false, kingSafety: false } },
+  casual:       { timeLimitMs: 400,  openingBook: false, randomChance: 0,   evalFlags: { pawnStructure: false, kingSafety: false } },
+  intermediate: { timeLimitMs: 900,  openingBook: false, randomChance: 0,   evalFlags: { pawnStructure: true,  kingSafety: true  } },
+  hard:         { timeLimitMs: 1500, openingBook: true,  randomChance: 0,   evalFlags: { pawnStructure: true,  kingSafety: true  } },
+};
+
+export const findBestMove = (board, color, enPassantTarget, difficulty = "hard") => {
+  const cfg = DIFFICULTY_CONFIGS[difficulty] ?? DIFFICULTY_CONFIGS.hard;
+  setEvalFlags(cfg.evalFlags);
+
+  if (cfg.openingBook) {
+    const bookMove = getBookMove(board, color, enPassantTarget);
+    if (bookMove) return { move: bookMove, depth: 0, score: 0 };
+  }
 
   const allMoves = getAllLegalMovesForColor(board, color, enPassantTarget);
   if (!allMoves.length) return null;
 
+  if (cfg.randomChance > 0 && Math.random() < cfg.randomChance) {
+    const move = allMoves[Math.floor(Math.random() * allMoves.length)];
+    return { move, depth: 0, score: 0 };
+  }
+
   resetKillers();
   resetHistory();
-  setDeadline(performance.now() + timeLimitMs);
+  setDeadline(performance.now() + cfg.timeLimitMs);
 
   // Fallback: first move from initial priority sort (in case depth 1 times out immediately)
   let bestMove = sortMovesByPriority(board, allMoves, color, enPassantTarget)[0];
