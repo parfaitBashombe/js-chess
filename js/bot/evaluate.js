@@ -3,6 +3,9 @@ import { isKingInCheck, isSquareUnderAttack } from "../board/check.js";
 import { generateMovesForPiece } from "../board/move-generate.js";
 import { oppositeColor, findKing } from "../board/helpers.js";
 
+let evalFlags = { pawnStructure: true, kingSafety: true };
+export const setEvalFlags = (flags) => { evalFlags = { ...flags }; };
+
 // ── Endgame detection ──────────────────────────────────────────────────────────
 
 export const isEndgame = (board) => {
@@ -181,8 +184,8 @@ export const scoreBoard = (board, botColor, enPassantTarget) => {
     (isKingInCheck(board, botColor) ? -40 : 0);
 
   // Structural and safety terms
-  const pawns    = evalPawnStructure(board, botColor, oppColor);
-  const safety   = endgame ? 0 : evalKingSafety(board, botColor, oppColor);
+  const pawns    = evalFlags.pawnStructure ? evalPawnStructure(board, botColor, oppColor) : 0;
+  const safety   = (!endgame && evalFlags.kingSafety) ? evalKingSafety(board, botColor, oppColor) : 0;
   const mopUp    = endgame ? evalMopUp(board, botColor, oppColor, material) : 0;
 
   return material + position + mobility + checkBonus + pawns + safety + mopUp;

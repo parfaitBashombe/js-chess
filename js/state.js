@@ -13,6 +13,7 @@ export const state = {
   gameOver: false,
   winner: null,
   gameMode: "human",
+  botDifficulty: "hard",
   playerColorChoice: "white",
   playerColor: "white",
   botThinking: false,

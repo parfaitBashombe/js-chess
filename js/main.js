@@ -5,6 +5,7 @@ import {
   closeSetupOverlay,
   selectMode,
   selectPlayerColor,
+  selectDifficulty,
   resign,
   goToPreviousMove,
   goToNextMove,
@@ -30,6 +31,11 @@ document
 document.getElementById("playAsWhiteBtn").addEventListener("click",  () => selectPlayerColor("white"));
 document.getElementById("playAsRandomBtn").addEventListener("click", () => selectPlayerColor("random"));
 document.getElementById("playAsBlackBtn").addEventListener("click",  () => selectPlayerColor("black"));
+
+document.getElementById("diffBeginnerBtn").addEventListener("click",     () => selectDifficulty("beginner"));
+document.getElementById("diffCasualBtn").addEventListener("click",       () => selectDifficulty("casual"));
+document.getElementById("diffIntermediateBtn").addEventListener("click", () => selectDifficulty("intermediate"));
+document.getElementById("diffHardBtn").addEventListener("click",         () => selectDifficulty("hard"));
 
 // ── Side panel ────────────────────────────────────────────
 
