@@ -85,6 +85,13 @@ const updateBoardOverlay = () => {
     document.getElementById("playAsWhiteBtn").classList.toggle("active", state.playerColorChoice === "white");
     document.getElementById("playAsRandomBtn").classList.toggle("active", state.playerColorChoice === "random");
     document.getElementById("playAsBlackBtn").classList.toggle("active", state.playerColorChoice === "black");
+
+    const diffSel = document.getElementById("difficultySelector");
+    diffSel.classList.toggle("hidden", state.gameMode !== "bot");
+    ["beginner", "casual", "intermediate", "hard"].forEach(level => {
+      document.getElementById(`diff${capitalize(level)}Btn`)
+        .classList.toggle("active", state.botDifficulty === level);
+    });
   } else {
     overlay.className = "board-overlay board-overlay--hidden";
   }
@@ -110,6 +117,7 @@ export const initializeApp = () => {
     state.overlayVisible      = false;
     state.reviewIndex         = null;
     if (!state.positionHistory) state.positionHistory = [];
+    if (!state.botDifficulty)  state.botDifficulty   = "hard";
     render();
     runBotIfNeeded();
     return;
@@ -210,6 +218,11 @@ export const selectMode = (mode) => {
 
 export const selectPlayerColor = (choice) => {
   state.playerColorChoice = choice;
+  updateBoardOverlay();
+};
+
+export const selectDifficulty = (level) => {
+  state.botDifficulty = level;
   updateBoardOverlay();
 };
 
@@ -482,7 +495,7 @@ const runBotIfNeeded = () => {
     board: state.board,
     color: botColor,
     enPassantTarget: state.enPassantTarget,
-    timeLimitMs: 1500,
+    difficulty: state.botDifficulty,
     jobId,
   });
 };

@@ -38,8 +38,9 @@ const renderPlayerCards = (state) => {
 
   const botColor = state.gameMode === "bot" ? oppositeColor(state.playerColor) : null;
 
-  whiteCard.querySelector(".player-sub").textContent = botColor === "white" ? "Bot" : "Player 1";
-  document.getElementById("blackSub").textContent    = botColor === "black" ? "Bot" : "Player 2";
+  const botLabel = `Bot · ${capitalize(state.botDifficulty)}`;
+  whiteCard.querySelector(".player-sub").textContent = botColor === "white" ? botLabel : "Player 1";
+  document.getElementById("blackSub").textContent    = botColor === "black" ? botLabel : "Player 2";
 
   whiteCard.classList.toggle("active",   state.currentTurn === "white" && !state.gameOver && state.reviewIndex === null);
   blackCard.classList.toggle("active",   state.currentTurn === "black" && !state.gameOver && state.reviewIndex === null);
