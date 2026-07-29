@@ -11,6 +11,7 @@ import {
   goToNextMove,
   goToLivePosition,
   goToMove,
+  completePromotion,
 } from "./game.js";
 
 // ── Board overlay ─────────────────────────────────────────
@@ -59,6 +60,13 @@ document.getElementById("playAgainBtn").addEventListener("click", startNewGame);
 document.getElementById("newGameBtn").addEventListener("click", showSetupOverlay);
 document.getElementById("viewBoardBtn").addEventListener("click", () => {
   document.getElementById("endScreen").classList.add("hidden");
+});
+
+// ── Promotion picker ──────────────────────────────────────
+
+document.getElementById("promotionOptions").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-piece]");
+  if (btn) completePromotion(btn.dataset.piece);
 });
 
 // ── Boot ──────────────────────────────────────────────────

@@ -11,10 +11,36 @@ import {
 import { renderBoard } from "./ui/board.js";
 import { renderPanel } from "./ui/panel.js";
 import { showEndScreen } from "./ui/end-screen.js";
+import { showPromotionPicker, hidePromotionPicker } from "./ui/promotion.js";
 
 // ── History helpers ───────────────────────────────────────
 
 const deepCopyBoard = (board) => board.map(row => row.map(p => p ? { ...p } : null));
+
+const getPositionKey = (board, turn, enPassantTarget) => {
+  let key = turn;
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (p) key += `${r}${c}${p.color[0]}${p.type[0]}${p.hasMoved ? 1 : 0}`;
+    }
+  if (enPassantTarget) key += `ep${enPassantTarget.col}`;
+  return key;
+};
+
+const isInsufficientMaterial = (board) => {
+  const pieces = [];
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++)
+      if (board[r][c]) pieces.push(board[r][c]);
+
+  if (pieces.length === 2) return true;
+  if (pieces.length === 3) {
+    const minor = pieces.find(p => p.type === "bishop" || p.type === "knight");
+    if (minor) return true;
+  }
+  return false;
+};
 
 // ── Bot Web Worker ────────────────────────────────────────
 const botWorker = new Worker(new URL("./bot/worker.js", import.meta.url), { type: "module" });
@@ -109,13 +135,14 @@ export const initializeApp = () => {
 
   if (saved && saved.gameStarted) {
     Object.assign(state, saved);
-    state.selectedSquare      = null;
+    state.selectedSquare        = null;
     state.legalMovesForSelected = [];
-    state.botThinking         = false;
-    state.botJobId            = 0;
-    state.animateMove         = false;
-    state.overlayVisible      = false;
-    state.reviewIndex         = null;
+    state.botThinking           = false;
+    state.botJobId              = 0;
+    state.animateMove           = false;
+    state.overlayVisible        = false;
+    state.reviewIndex           = null;
+    state.pendingPromotion      = null;
     if (!state.positionHistory) state.positionHistory = [];
     if (!state.botDifficulty)  state.botDifficulty   = "hard";
     render();
@@ -139,6 +166,7 @@ export const initializeApp = () => {
   state.botThinking = false;
   state.overlayVisible = true;
   state.gameStarted = false;
+  state.pendingPromotion = null;
   render();
 };
 
@@ -160,6 +188,8 @@ export const startNewGame = () => {
   state.botThinking = false;
   state.overlayVisible = false;
   state.gameStarted = true;
+  state.pendingPromotion = null;
+  hidePromotionPicker();
 
   state.playerColor =
     state.playerColorChoice === "random"
@@ -251,7 +281,7 @@ export const resign = () => {
 
 const handleSquareClick = (row, col) => {
   if (state.reviewIndex !== null) return;
-  if (state.gameOver || state.botThinking) return;
+  if (state.gameOver || state.botThinking || state.pendingPromotion) return;
   if (state.gameMode === "bot" && state.currentTurn !== state.playerColor) return;
 
   const piece = state.board[row][col];
@@ -286,7 +316,7 @@ const handleSquareClick = (row, col) => {
 
 const handleDragStart = (row, col) => {
   if (state.reviewIndex !== null) return;
-  if (state.gameOver || state.botThinking) return;
+  if (state.gameOver || state.botThinking || state.pendingPromotion) return;
   if (state.gameMode === "bot" && state.currentTurn !== state.playerColor) return;
   state.selectedSquare = { row, col };
   state.legalMovesForSelected = getLegalMovesForPiece(
@@ -305,7 +335,7 @@ const handleDragEnd = () => {
 
 const handleDrop = (row, col, sourceRow, sourceCol) => {
   if (state.reviewIndex !== null) return;
-  if (state.gameOver || state.botThinking) return;
+  if (state.gameOver || state.botThinking || state.pendingPromotion) return;
 
   const legalMoves = getLegalMovesForPiece(
     state.board,
@@ -346,58 +376,100 @@ const clearSelection = () => {
 };
 
 const executeMove = (fromRow, fromCol, move) => {
-  const movingPiece = state.board[fromRow][fromCol];
-  const originalType = movingPiece.type;
+  const movingPiece   = state.board[fromRow][fromCol];
+  const originalType  = movingPiece.type;
   const originalColor = movingPiece.color;
-  const fromName = toSquareName(fromRow, fromCol);
-  const toName = toSquareName(move.row, move.col);
+  const fromName      = toSquareName(fromRow, fromCol);
+  const toName        = toSquareName(move.row, move.col);
 
   const capturedPiece = applyMoveToBoard(state.board, fromRow, fromCol, move);
   if (capturedPiece) {
     state.capturedPieces[capturedPiece.color].push(capturedPiece.type);
   }
 
-  const landedPiece = state.board[move.row][move.col];
-  let didPromote = false;
-  if (landedPiece.type === "pawn" && (move.row === 0 || move.row === 7)) {
-    landedPiece.type = "queen";
-    didPromote = true;
+  const landedPiece  = state.board[move.row][move.col];
+  const isPromotion  = landedPiece.type === "pawn" && (move.row === 0 || move.row === 7);
+  const isBotMove    = state.gameMode === "bot" && state.currentTurn !== state.playerColor;
+
+  if (isPromotion && !isBotMove) {
+    state.pendingPromotion = {
+      toRow: move.row, toCol: move.col,
+      fromRow, fromCol,
+      originalColor, originalType,
+      fromName, toName,
+      capturedPiece, special: move.special,
+    };
+    showPromotionPicker(originalColor);
+    render();
+    return;
   }
 
+  let promotionType = null;
+  if (isPromotion) {
+    landedPiece.type = "queen";
+    promotionType    = "queen";
+  }
+
+  finishMove({
+    originalColor, originalType,
+    fromRow, fromCol, toRow: move.row, toCol: move.col,
+    fromName, toName,
+    capturedPiece, didPromote: isPromotion, promotionType,
+    special: move.special,
+  });
+};
+
+export const completePromotion = (chosenType) => {
+  const p = state.pendingPromotion;
+  state.pendingPromotion = null;
+  hidePromotionPicker();
+
+  state.board[p.toRow][p.toCol].type = chosenType;
+
+  finishMove({
+    originalColor: p.originalColor, originalType: p.originalType,
+    fromRow: p.fromRow, fromCol: p.fromCol,
+    toRow: p.toRow, toCol: p.toCol,
+    fromName: p.fromName, toName: p.toName,
+    capturedPiece: p.capturedPiece, didPromote: true, promotionType: chosenType,
+    special: p.special,
+  });
+};
+
+const finishMove = ({
+  originalColor, originalType,
+  fromRow, fromCol, toRow, toCol,
+  fromName, toName,
+  capturedPiece, didPromote, promotionType, special,
+}) => {
   state.lastMove = {
     from: { row: fromRow, col: fromCol },
-    to: { row: move.row, col: move.col },
+    to:   { row: toRow,   col: toCol   },
   };
 
   state.enPassantTarget = null;
-  if (originalType === "pawn" && Math.abs(move.row - fromRow) === 2) {
+  if (originalType === "pawn" && Math.abs(toRow - fromRow) === 2) {
     state.enPassantTarget = {
-      row: (fromRow + move.row) / 2,
+      row: (fromRow + toRow) / 2,
       col: fromCol,
-      capturedRow: move.row,
+      capturedRow: toRow,
       capturedCol: fromCol,
     };
   }
 
   state.moveHistory.push(
-    buildMoveDescription({
-      color: originalColor,
-      type: originalType,
-      fromName,
-      toName,
-      capturedPiece,
-      didPromote,
-      special: move.special,
-    }),
+    buildMoveDescription({ color: originalColor, type: originalType, fromName, toName, capturedPiece, didPromote, promotionType, special }),
   );
 
   state.currentTurn = oppositeColor(state.currentTurn);
+  const posKey = getPositionKey(state.board, state.currentTurn, state.enPassantTarget);
   state.positionHistory.push({
     board: deepCopyBoard(state.board),
     currentTurn: state.currentTurn,
     enPassantTarget: state.enPassantTarget,
     capturedPieces: { white: [...state.capturedPieces.white], black: [...state.capturedPieces.black] },
     lastMove: state.lastMove,
+    key: posKey,
   });
 
   state.selectedSquare = null;
@@ -411,31 +483,20 @@ const executeMove = (fromRow, fromCol, move) => {
 };
 
 const buildMoveDescription = ({
-  color,
-  type,
-  fromName,
-  toName,
-  capturedPiece,
-  didPromote,
-  special,
+  color, type, fromName, toName, capturedPiece, didPromote, promotionType, special,
 }) => {
-  if (special === "castleKing") return `${capitalize(color)} castles kingside.`;
-  if (special === "castleQueen")
-    return `${capitalize(color)} castles queenside.`;
+  if (special === "castleKing")  return `${capitalize(color)} castles kingside.`;
+  if (special === "castleQueen") return `${capitalize(color)} castles queenside.`;
 
   let text = `${capitalize(color)} ${capitalize(type)} ${fromName} → ${toName}`;
   if (capturedPiece) text += ` captures ${capitalize(capturedPiece.type)}`;
-  if (didPromote) text += " and promotes to Queen";
+  if (didPromote)    text += ` and promotes to ${capitalize(promotionType)}`;
 
   return `${text}.`;
 };
 
 const updateGameStatus = (lastPlayerToMove) => {
-  const nextPlayerMoves = getAllLegalMovesForColor(
-    state.board,
-    state.currentTurn,
-    state.enPassantTarget,
-  );
+  const nextPlayerMoves  = getAllLegalMovesForColor(state.board, state.currentTurn, state.enPassantTarget);
   const nextPlayerInCheck = isKingInCheck(state.board, state.currentTurn);
 
   if (nextPlayerMoves.length === 0 && nextPlayerInCheck) {
@@ -452,12 +513,26 @@ const updateGameStatus = (lastPlayerToMove) => {
   if (nextPlayerMoves.length === 0) {
     state.gameOver = true;
     state.statusMessage = "Stalemate. The game is a draw.";
-    queueEndScreen(
-      null,
-      "Draw",
-      "Stalemate — the player to move has no legal moves but is not in check.",
-    );
+    queueEndScreen(null, "Draw", "Stalemate — the player to move has no legal moves but is not in check.");
     return;
+  }
+
+  if (isInsufficientMaterial(state.board)) {
+    state.gameOver = true;
+    state.statusMessage = "Draw. Insufficient material.";
+    queueEndScreen(null, "Draw", "Neither side has enough material to deliver checkmate.");
+    return;
+  }
+
+  const currentKey = state.positionHistory.at(-1)?.key;
+  if (currentKey) {
+    const repetitions = state.positionHistory.filter(p => p.key === currentKey).length;
+    if (repetitions >= 3) {
+      state.gameOver = true;
+      state.statusMessage = "Draw by threefold repetition.";
+      queueEndScreen(null, "Draw", "The same position has occurred three times.");
+      return;
+    }
   }
 
   if (nextPlayerInCheck) {

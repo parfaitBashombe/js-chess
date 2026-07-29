@@ -21,4 +21,5 @@ export const state = {
   overlayVisible: true,
   gameStarted: false,
   animateMove: false,
+  pendingPromotion: null,
 };
