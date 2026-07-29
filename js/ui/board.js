@@ -95,7 +95,7 @@ const buildSquare = (row, col, vRow, vCol, isFlipped, state, displayBoard, displ
   if (!reviewing && isSelectedSquare(row, col, state.selectedSquare)) squareEl.classList.add("selected");
   if (legalMove) squareEl.classList.add(legalMove.capture ? "capture" : "legal");
 
-  if (piece?.type === "king") {
+  if (piece?.type === "king" && !state.gameOver) {
     if ((piece.color === "white" && whiteInCheck) || (piece.color === "black" && blackInCheck)) {
       squareEl.classList.add("check");
     }
