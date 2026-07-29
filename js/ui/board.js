@@ -154,10 +154,11 @@ const buildPieceElement = (piece, row, col, state, handlers, reviewing) => {
     !state.botThinking &&
     !isBotTurn;
 
-  const isLoserKing = state.winner && piece.type === "king" && piece.color !== state.winner;
+  const isLoserKing  = state.winner && piece.type === "king" && piece.color !== state.winner;
+  const isWinnerKing = state.winner && piece.type === "king" && piece.color === state.winner;
 
   const pieceEl = document.createElement("div");
-  pieceEl.className  = `piece ${piece.color}${isLoserKing ? " loser-king" : ""}`;
+  pieceEl.className  = `piece ${piece.color}${isLoserKing ? " loser-king" : ""}${isWinnerKing ? " winner-king" : ""}`;
   pieceEl.draggable  = canPlayerMovePiece;
   pieceEl.setAttribute("aria-label", `${piece.color} ${piece.type}`);
 

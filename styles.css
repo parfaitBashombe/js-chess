@@ -410,6 +410,18 @@ h1 {
   pointer-events: none;
 }
 
+.piece.winner-king::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at center,
+    rgba(255, 200, 0, 1) 0%,
+    rgba(255, 200, 0, 0.85) 35%,
+    transparent 75%
+  );
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .piece { transition: transform 0.1s var(--ease-out); }
   .piece:active { transform: scale(1.08); }
