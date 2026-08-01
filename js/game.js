@@ -476,7 +476,7 @@ const finishMove = ({
   state.selectedSquare = null;
   state.legalMovesForSelected = [];
 
-  playMove();
+  if (capturedPiece) playCapture(); else playMove();
   updateGameStatus(originalColor);
   state.animateMove = true;
   render();
