@@ -95,18 +95,32 @@ const renderMoveHistory = (state) => {
     return;
   }
 
-  moveHistoryEl.innerHTML = state.moveHistory
-    .map((moveText, index) => {
-      const isActive = state.reviewIndex === index;
-      return `<div class="history-item${isActive ? " history-item--active" : ""}" data-move-index="${index}">
-        <span class="history-number">${String(index + 1).padStart(2, "0")}</span>
-        <span>${moveText}</span>
+  const pairs = [];
+  for (let i = 0; i < state.moveHistory.length; i += 2) {
+    pairs.push([i, i + 1]);
+  }
+
+  moveHistoryEl.innerHTML = pairs
+    .map(([wi, bi], pairIndex) => {
+      const whiteMove = state.moveHistory[wi];
+      const blackMove = state.moveHistory[bi];
+      const whiteActive = state.reviewIndex === wi;
+      const blackActive = state.reviewIndex === bi;
+
+      const blackCell = blackMove !== undefined
+        ? `<span class="history-move${blackActive ? " history-move--active" : ""}" data-move-index="${bi}">${blackMove}</span>`
+        : `<span></span>`;
+
+      return `<div class="history-pair">
+        <span class="history-number">${pairIndex + 1}.</span>
+        <span class="history-move${whiteActive ? " history-move--active" : ""}" data-move-index="${wi}">${whiteMove}</span>
+        ${blackCell}
       </div>`;
     })
     .join("");
 
   if (state.reviewIndex !== null) {
-    const activeEl = moveHistoryEl.querySelector(".history-item--active");
+    const activeEl = moveHistoryEl.querySelector(".history-move--active");
     if (activeEl) activeEl.scrollIntoView({ block: "nearest" });
   } else {
     moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
