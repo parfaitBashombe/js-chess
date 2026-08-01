@@ -22,4 +22,5 @@ export const state = {
   gameStarted: false,
   animateMove: false,
   pendingPromotion: null,
+  halfMoveClock: 0,
 };

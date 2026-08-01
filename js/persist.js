@@ -16,6 +16,7 @@ const PERSISTENT_FIELDS = [
   "playerColorChoice",
   "playerColor",
   "gameStarted",
+  "halfMoveClock",
 ];
 
 export const saveState = (state) => {
