@@ -502,6 +502,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   const nextPlayerInCheck = isKingInCheck(state.board, state.currentTurn);
 
   if (nextPlayerMoves.length === 0 && nextPlayerInCheck) {
+    playEnd();
     state.gameOver = true;
     state.statusMessage = `Checkmate. ${capitalize(lastPlayerToMove)} wins.`;
     queueEndScreen(
@@ -513,6 +514,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   }
 
   if (nextPlayerMoves.length === 0) {
+    playEnd();
     state.gameOver = true;
     state.statusMessage = "Stalemate. The game is a draw.";
     queueEndScreen(null, "Draw", "Stalemate — the player to move has no legal moves but is not in check.");
@@ -520,6 +522,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   }
 
   if (isInsufficientMaterial(state.board)) {
+    playEnd();
     state.gameOver = true;
     state.statusMessage = "Draw. Insufficient material.";
     queueEndScreen(null, "Draw", "Neither side has enough material to deliver checkmate.");
@@ -530,6 +533,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   if (currentKey) {
     const repetitions = state.positionHistory.filter(p => p.key === currentKey).length;
     if (repetitions >= 3) {
+      playEnd();
       state.gameOver = true;
       state.statusMessage = "Draw by threefold repetition.";
       queueEndScreen(null, "Draw", "The same position has occurred three times.");
@@ -538,6 +542,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   }
 
   if (nextPlayerInCheck) {
+    playCheck();
     state.statusMessage = `${capitalize(state.currentTurn)} is in check. ${capitalize(state.currentTurn)} to move.`;
     return;
   }
