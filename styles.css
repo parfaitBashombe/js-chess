@@ -669,34 +669,47 @@ h1 {
   border-radius: 999px;
 }
 
-.history-item {
-  display: flex;
-  gap: 8px;
-  align-items: start;
-  padding: 7px 9px;
-  border-radius: 12px;
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+.history-pair {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  padding: 2px 4px;
 }
 
-.history-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-}
-
-.history-item--active {
-  background: rgba(129, 182, 76, 0.1);
-  border-color: rgba(129, 182, 76, 0.35) !important;
-  color: var(--text);
+.history-pair:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .history-number {
   color: var(--green-main);
+  font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  padding-left: 2px;
+}
+
+.history-move {
+  padding: 5px 7px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.history-move:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.history-move--active {
+  background: rgba(129, 182, 76, 0.12);
+  border-color: rgba(129, 182, 76, 0.35);
+  color: var(--text);
 }
 
 /* ── Controls ────────────────────────────────────────── */
