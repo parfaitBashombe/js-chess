@@ -12,6 +12,7 @@ import { renderBoard } from "./ui/board.js";
 import { renderPanel } from "./ui/panel.js";
 import { showEndScreen } from "./ui/end-screen.js";
 import { showPromotionPicker, hidePromotionPicker } from "./ui/promotion.js";
+import { playMove, playCapture, playCheck, playEnd } from "./ui/sound.js";
 
 // ── History helpers ───────────────────────────────────────
 
@@ -475,6 +476,7 @@ const finishMove = ({
   state.selectedSquare = null;
   state.legalMovesForSelected = [];
 
+  playMove();
   updateGameStatus(originalColor);
   state.animateMove = true;
   render();
