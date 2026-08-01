@@ -145,6 +145,7 @@ export const initializeApp = () => {
     state.pendingPromotion      = null;
     if (!state.positionHistory) state.positionHistory = [];
     if (!state.botDifficulty)  state.botDifficulty   = "hard";
+    if (!state.halfMoveClock)  state.halfMoveClock    = 0;
     render();
     runBotIfNeeded();
     return;
@@ -189,6 +190,7 @@ export const startNewGame = () => {
   state.overlayVisible = false;
   state.gameStarted = true;
   state.pendingPromotion = null;
+  state.halfMoveClock = 0;
   hidePromotionPicker();
 
   state.playerColor =
@@ -447,6 +449,12 @@ const finishMove = ({
     to:   { row: toRow,   col: toCol   },
   };
 
+  if (originalType === "pawn" || capturedPiece) {
+    state.halfMoveClock = 0;
+  } else {
+    state.halfMoveClock += 1;
+  }
+
   state.enPassantTarget = null;
   if (originalType === "pawn" && Math.abs(toRow - fromRow) === 2) {
     state.enPassantTarget = {
@@ -521,6 +529,13 @@ const updateGameStatus = (lastPlayerToMove) => {
     state.gameOver = true;
     state.statusMessage = "Draw. Insufficient material.";
     queueEndScreen(null, "Draw", "Neither side has enough material to deliver checkmate.");
+    return;
+  }
+
+  if (state.halfMoveClock >= 100) {
+    state.gameOver = true;
+    state.statusMessage = "Draw by 50-move rule.";
+    queueEndScreen(null, "Draw", "No pawn move or capture in the last 50 moves.");
     return;
   }
 
