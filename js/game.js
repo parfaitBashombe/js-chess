@@ -1,7 +1,8 @@
 import { state } from "./state.js";
 import { saveState, loadState } from "./persist.js";
 import { createInitialBoard } from "./board/setup.js";
-import { oppositeColor, capitalize, toSquareName } from "./board/helpers.js";
+import { oppositeColor, capitalize } from "./board/helpers.js";
+import { buildSAN } from "./board/san.js";
 import { isKingInCheck } from "./board/check.js";
 import { applyMoveToBoard } from "./board/apply-move.js";
 import {
@@ -381,8 +382,7 @@ const executeMove = (fromRow, fromCol, move) => {
   const movingPiece   = state.board[fromRow][fromCol];
   const originalType  = movingPiece.type;
   const originalColor = movingPiece.color;
-  const fromName      = toSquareName(fromRow, fromCol);
-  const toName        = toSquareName(move.row, move.col);
+  const boardBefore   = deepCopyBoard(state.board);
 
   const capturedPiece = applyMoveToBoard(state.board, fromRow, fromCol, move);
   if (capturedPiece) {
@@ -398,7 +398,7 @@ const executeMove = (fromRow, fromCol, move) => {
       toRow: move.row, toCol: move.col,
       fromRow, fromCol,
       originalColor, originalType,
-      fromName, toName,
+      boardBefore,
       capturedPiece, special: move.special,
     };
     showPromotionPicker(originalColor);
@@ -415,7 +415,7 @@ const executeMove = (fromRow, fromCol, move) => {
   finishMove({
     originalColor, originalType,
     fromRow, fromCol, toRow: move.row, toCol: move.col,
-    fromName, toName,
+    boardBefore,
     capturedPiece, didPromote: isPromotion, promotionType,
     special: move.special,
   });
@@ -432,7 +432,7 @@ export const completePromotion = (chosenType) => {
     originalColor: p.originalColor, originalType: p.originalType,
     fromRow: p.fromRow, fromCol: p.fromCol,
     toRow: p.toRow, toCol: p.toCol,
-    fromName: p.fromName, toName: p.toName,
+    boardBefore: p.boardBefore,
     capturedPiece: p.capturedPiece, didPromote: true, promotionType: chosenType,
     special: p.special,
   });
@@ -441,7 +441,7 @@ export const completePromotion = (chosenType) => {
 const finishMove = ({
   originalColor, originalType,
   fromRow, fromCol, toRow, toCol,
-  fromName, toName,
+  boardBefore,
   capturedPiece, didPromote, promotionType, special,
 }) => {
   state.lastMove = {
@@ -466,7 +466,7 @@ const finishMove = ({
   }
 
   state.moveHistory.push(
-    buildMoveDescription({ color: originalColor, type: originalType, fromName, toName, capturedPiece, didPromote, promotionType, special }),
+    buildSAN(boardBefore, { type: originalType, color: originalColor, fromRow, fromCol, toRow, toCol, special, didPromote, promotionType }),
   );
 
   state.currentTurn = oppositeColor(state.currentTurn);
@@ -490,17 +490,9 @@ const finishMove = ({
   runBotIfNeeded();
 };
 
-const buildMoveDescription = ({
-  color, type, fromName, toName, capturedPiece, didPromote, promotionType, special,
-}) => {
-  if (special === "castleKing")  return `${capitalize(color)} castles kingside.`;
-  if (special === "castleQueen") return `${capitalize(color)} castles queenside.`;
-
-  let text = `${capitalize(color)} ${capitalize(type)} ${fromName} → ${toName}`;
-  if (capturedPiece) text += ` captures ${capitalize(capturedPiece.type)}`;
-  if (didPromote)    text += ` and promotes to ${capitalize(promotionType)}`;
-
-  return `${text}.`;
+const annotateLastMove = (suffix) => {
+  if (!state.moveHistory.length) return;
+  state.moveHistory[state.moveHistory.length - 1] += suffix;
 };
 
 const updateGameStatus = (lastPlayerToMove) => {
@@ -508,6 +500,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   const nextPlayerInCheck = isKingInCheck(state.board, state.currentTurn);
 
   if (nextPlayerMoves.length === 0 && nextPlayerInCheck) {
+    annotateLastMove("#");
     state.gameOver = true;
     state.statusMessage = `Checkmate. ${capitalize(lastPlayerToMove)} wins.`;
     queueEndScreen(
@@ -551,6 +544,7 @@ const updateGameStatus = (lastPlayerToMove) => {
   }
 
   if (nextPlayerInCheck) {
+    annotateLastMove("+");
     state.statusMessage = `${capitalize(state.currentTurn)} is in check. ${capitalize(state.currentTurn)} to move.`;
     return;
   }
