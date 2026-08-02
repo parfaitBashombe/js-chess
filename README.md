@@ -47,11 +47,16 @@ Every standard rule is implemented correctly:
 - All piece movement (pawn, knight, bishop, rook, queen, king)
 - Pawn double-push on the first move
 - En passant capture
-- Pawn promotion (auto-promotes to queen)
+- Pawn promotion with a picker for queen, rook, bishop, or knight when a human promotes
 - Kingside and queenside castling (with all proper conditions: king and rook must not have moved, no pieces between them, king cannot pass through check)
 - Check detection and king highlighting
 - Checkmate detection
 - Stalemate detection (draw)
+- Draw by insufficient material
+- Draw by the 50-move rule
+- Draw by threefold repetition
+
+Bot promotions are automatically promoted to a queen so the AI can finish its move without opening the promotion picker.
 
 ### Move Input
 
@@ -62,11 +67,13 @@ Every standard rule is implemented correctly:
 
 Every position in the game is stored. The side panel includes previous/next buttons and a Live button so you can step through the entire game history without leaving the page. Clicking any entry in the move list jumps directly to that position. Navigating history is read-only — the live game is unaffected.
 
+Moves are displayed in standard algebraic notation (SAN), including castling (`O-O`, `O-O-O`), captures (`exd5`), promotion (`e8=Q`), check (`+`), and checkmate (`#`).
+
 ### Side Panel
 
 A persistent sidebar tracks the game in real time:
 
-- Live move history in plain English (e.g. "White Pawn e2 → e4", "White castles kingside")
+- Live move history in standard algebraic notation for compact chess notation
 - Captured pieces list for each color with a running material point total
 - Current status message (whose turn, check warnings, bot thinking indicator)
 - Resign button (disabled until at least one move has been made)
@@ -89,6 +96,7 @@ When the game ends, the board stays alive for 3 seconds so both players can see 
 - Highlighted squares for: selected piece, legal moves, captures, last move, king in check
 - Animated "Game start" flash when a new game begins
 - Smooth transitions and CSS animations throughout
+- Sound effects for moves, captures, checks, and game endings
 - Space Grotesk typeface for a clean, modern feel
 - Board scales responsively to fit the viewport
 
@@ -117,6 +125,10 @@ The board is an 8×8 JavaScript array. Each cell is either `null` (empty) or an 
 ### Move Application
 
 `js/board/apply-move.js` mutates the board in place for a given move. It handles the standard case (move piece, clear source), plus the special cases: en passant (remove the captured pawn from a different square), castling (move both king and rook), and sets `hasMoved: true` after any king or rook move.
+
+### Move Notation
+
+`js/board/san.js` builds standard algebraic notation for the move list. It handles pawn moves, captures, disambiguation when multiple pieces can move to the same square, castling, promotion, check, and checkmate suffixes.
 
 ---
 
@@ -191,6 +203,7 @@ js-chess/
 │   ├── crown.svg               # Gold crown for end screen
 │   └── crown-green.svg         # Green crown shown on winning king
 ├── pieces/                     # SVG piece images (wK, bQ, etc.)
+├── sounds/                     # Move, capture, check, and game-end audio
 └── js/
     ├── main.js                 # Event listeners, app boot
     ├── game.js                 # Game controller — state transitions, input handling
@@ -203,6 +216,7 @@ js-chess/
     │   ├── legal-moves.js      # Filters moves that leave king in check
     │   ├── apply-move.js       # Mutates board for a move (handles special cases)
     │   ├── castling.js         # Castling eligibility checks
+    │   ├── san.js              # Standard algebraic notation for move history
     │   └── check.js            # King-in-check and square-under-attack detection
     ├── bot/
     │   ├── worker.js           # Web Worker entry point — receives message, posts back best move
@@ -221,6 +235,8 @@ js-chess/
     └── ui/
         ├── board.js            # Renders the 8x8 board and all piece/square states
         ├── panel.js            # Renders the side panel (history, captures, status)
+        ├── promotion.js        # Shows the human pawn-promotion picker
+        ├── sound.js            # Plays move, capture, check, and game-end sounds
         └── end-screen.js       # Shows the winner card after a game ends
 ```
 
@@ -228,9 +244,11 @@ js-chess/
 
 ## Game State Persistence
 
-The game is automatically saved to `localStorage` after every move, when a new game starts, and when a player resigns. If you close the tab or refresh the page mid-game, everything is restored exactly as you left it — the board position, captured pieces, move history, whose turn it is, and which mode, color, and difficulty you were playing.
+The game is automatically saved to `localStorage` after every move, when a new game starts, and when a player resigns. If you close the tab or refresh the page mid-game, the board position, captured pieces, move history, whose turn it is, mode, color choice, and game-over state are restored.
 
-The following is saved: board, current turn, captured pieces, last move, en passant target, move history, game mode, difficulty level, player color, and game-over state. Transient UI state (selected piece, legal move highlights, bot thinking flag) is intentionally excluded and resets cleanly on restore.
+The following is saved: board, current turn, captured pieces, last move, en passant target, move history, position history, status message, game mode, player color, game-started state, game-over state, winner, and half-move clock. Transient UI state (selected piece, legal move highlights, bot thinking flag, review position, and pending promotion state) is intentionally excluded and resets cleanly on restore.
+
+The current difficulty setting is not persisted separately; restored bot games fall back to the default difficulty value if the page is refreshed.
 
 If the bot was thinking when you closed the page, it picks up its turn automatically on restore.
 
@@ -238,7 +256,7 @@ If the bot was thinking when you closed the page, it picks up its turn automatic
 
 ## Running Locally
 
-No build step required. Open `index.html` directly in a browser, or serve it with any static file server:
+No build step required. Serve the folder with any static file server:
 
 ```bash
 # Python
@@ -249,6 +267,8 @@ npx serve .
 ```
 
 Then open `http://localhost:8080` in your browser.
+
+Serving locally is recommended because the app uses ES modules and a module Web Worker. Opening `index.html` directly from the file system may be blocked by browser security rules.
 
 ---
 
